@@ -102,6 +102,8 @@ Item {
         z: 3
         hoverEnabled: true // <--- Critical for tracking before click
 
+        cursorShape: Qt.CrossCursor
+
         Timer {
             id: updateTimer
             interval: 16
