@@ -20,3 +20,6 @@ quickshell -c hyprquickshot -n
 ```bash
 bind = , Print, exec, quickshell -c hyprquickshot -n
 ```
+
+## Credit
+[yprquickshot](https://github.com/JamDon2/hyprquickshot)
