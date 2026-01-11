@@ -1,9 +1,10 @@
 # HyprShot
 
+# 
 
 https://github.com/user-attachments/assets/904066a7-3a67-4795-8353-0461219386a7
-
-
+### reminder:
+option for temporary screenshot
 
 ## Dependecies
 ```bash
