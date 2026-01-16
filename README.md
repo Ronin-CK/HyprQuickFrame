@@ -19,12 +19,10 @@ Features a modern overlay UI with shader-based dimming, smooth spring animations
     * Fragment shader for smooth dimming and rounded corners.
 * **Smart Saving:** Automatically saves to your `Pictures/Screenshots` folder AND copies to clipboard.
 
-<details>
-  <summary>▶ 🎥 View Demo </summary>
-  <br>
+🎥 Demo
 
 https://github.com/user-attachments/assets/904066a7-3a67-4795-8353-0461219386a7
-</details>
+
 
 ## 📦 Requirements
 
