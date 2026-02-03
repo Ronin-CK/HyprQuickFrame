@@ -29,6 +29,7 @@ Features a modern overlay UI with shader-based dimming, smooth spring animations
 <summary>Click to watch the demo</summary>
 <video src="https://github.com/user-attachments/assets/1c15ba34-3571-4f62-8dc2-4d1997ce41e2" controls="controls"> </video>
 <video src="https://github.com/user-attachments/assets/904066a7-3a67-4795-8353-0461219386a7" controls="controls"> </video>
+</details>
 
 ## 📦 Requirements
 
