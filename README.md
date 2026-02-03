@@ -1,4 +1,4 @@
-# HyprShot
+# HyprQuickFrame
 
 A polished, native screenshot utility for Hyprland built with **Quickshell**.
 Features a modern overlay UI with shader-based dimming, smooth spring animations, and intelligent window snapping.
@@ -22,8 +22,6 @@ Features a modern overlay UI with shader-based dimming, smooth spring animations
     *   **Editor Mode:** Opens the screenshot in **Satty** for annotation (Optional).
 
 ## 🎥 Demo
-
-
 
 <details>
 <summary>Click to watch the demo</summary>
@@ -54,13 +52,13 @@ yay -S quickshell
 
 ### 3. Clone Repository
 ```bash
-git clone https://github.com/Ronin-CK/HyprShot ~/.config/quickshell/HyprShot
+git clone https://github.com/Ronin-CK/HyprQuickFrame ~/.config/quickshell/HyprQuickFrame
 ```
 
 ### 4. Basic Test
 Run this in your terminal to verify installation:
 ```bash
-quickshell -c HyprShot -n
+quickshell -c HyprQuickFrame -n
 ```
 
 ## ⚙️ Configuration (Hyprland)
@@ -70,12 +68,12 @@ Add the following keybindings to your `hyprland.conf`:
 ```ini
 # 1. Standard Screenshot (Quick Save)
 # Saves directly to ~/Pictures/Screenshots and copies to clipboard
-bind = SUPER SHIFT, S, exec, quickshell -c HyprShot -n
+bind = SUPER SHIFT, S, exec, quickshell -c HyprQuickFrame -n
 
 # 2. Editor Mode (Annotation)
 # Opens the screenshot in Satty for editing before saving
 # Requires: satty
-bind = SUPER CTRL SHIFT, S, exec, HYPRSHOT_EDITOR=1 quickshell -c HyprShot -n
+bind = SUPER CTRL SHIFT, S, exec, HYPRSHOT_EDITOR=1 quickshell -c HyprQuickFrame -n
 ```
 
 ## Credit
