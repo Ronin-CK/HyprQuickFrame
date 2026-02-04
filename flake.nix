@@ -8,44 +8,71 @@
   outputs =
     { self, nixpkgs }:
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
-
-      runtimeDeps = with pkgs; [
-        quickshell
-        grim
-        imagemagick
-        wl-clipboard
-        satty
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
       ];
+      forAllSystems =
+        f: nixpkgs.lib.genAttrs supportedSystems (system: f (import nixpkgs { inherit system; }));
     in
     {
-      packages.${system}.default = pkgs.stdenv.mkDerivation {
-        pname = "hyprquickframe";
-        version = "0.1.0";
-        src = ./.;
+      packages = forAllSystems (pkgs: {
+        default = pkgs.stdenv.mkDerivation {
+          pname = "hyprquickframe";
+          version = "0.1.0";
+          src = ./.;
 
-        nativeBuildInputs = [ pkgs.makeWrapper ];
+          inherit (pkgs.stdenv.hostPlatform) system;
 
-        installPhase = ''
-          mkdir -p $out/share/hyprquickframe
-          cp -r * $out/share/hyprquickframe/
+          nativeBuildInputs = [ pkgs.makeWrapper ];
 
-          makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/hyprquickframe \
-            --prefix PATH : ${pkgs.lib.makeBinPath runtimeDeps} \
-            --add-flags "-c $out/share/hyprquickframe -n"
-        '';
+          buildInputs = with pkgs; [
+            quickshell
+            grim
+            imagemagick
+            wl-clipboard
+            satty
+          ];
 
-        meta = with pkgs.lib; {
-          description = "Quickshell-based screenshot utility for Hyprland";
-          homepage = "https://github.com/Ronin-CK/HyprQuickFrame";
-          license = licenses.mit;
-          platforms = platforms.linux;
+          installPhase = ''
+            mkdir -p $out/share/hyprquickframe
+            cp -r * $out/share/hyprquickframe/
+
+            makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/hyprquickframe \
+              --prefix PATH : ${
+                pkgs.lib.makeBinPath (
+                  with pkgs;
+                  [
+                    quickshell
+                    grim
+                    imagemagick
+                    wl-clipboard
+                    satty
+                  ]
+                )
+              } \
+              --add-flags "-c $out/share/hyprquickframe -n"
+          '';
+
+          meta = with pkgs.lib; {
+            description = "Quickshell-based screenshot utility for Hyprland";
+            homepage = "https://github.com/Ronin-CK/HyprQuickFrame";
+            license = licenses.mit;
+            platforms = platforms.linux;
+          };
         };
-      };
+      });
 
-      devShells.${system}.default = pkgs.mkShell {
-        buildInputs = runtimeDeps;
-      };
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            quickshell
+            grim
+            imagemagick
+            wl-clipboard
+            satty
+          ];
+        };
+      });
     };
 }
