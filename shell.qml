@@ -32,7 +32,7 @@ FreezeScreen {
         const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
         // Commands
         const sattyCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} png:- | satty --filename - --output-filename "${outputPath}" --early-exit --init-tool brush && rm "${tempPath}"`;
-        const defaultCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} "${outputPath}" && wl-copy < "${outputPath}" && rm "${tempPath}"`;
+        const defaultCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${scaledX}+${scaledY} "${outputPath}" && wl-copy < "${outputPath}" && notify-send -a "HyprQuickFrame" -i "${outputPath}" -h string:image-path:"${outputPath}" "Screenshot Saved" "Saved to Pictures/Screenshots" && rm "${tempPath}"`;
         screenshotProcess.command = ["sh", "-c", root.editorMode ? sattyCommand : defaultCommand];
         screenshotProcess.running = true;
         root.visible = false;
