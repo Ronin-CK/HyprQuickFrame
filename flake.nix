@@ -63,7 +63,7 @@
             mkdir -p $out/bin
             makeWrapper ${pkgs.quickshell}/bin/quickshell $out/bin/hyprquickframe \
               --prefix PATH : ${pkgs.lib.makeBinPath (runtimeDeps pkgs)} \
-              --add-flags "-c $out/share/hyprquickframe/shell.qml"
+              --add-flags "-c $out/share/hyprquickframe -n"
 
             runHook postInstall
           '';
