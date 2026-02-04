@@ -1,0 +1,7 @@
+result
+result-*
+.direnv/
+.envrc
+*.log
+__pycache__/
+*.pyc
