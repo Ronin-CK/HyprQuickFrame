@@ -73,6 +73,24 @@ FreezeScreen {
         }
     }
 
+    Shortcut {
+        sequence: "r"
+        onActivated: root.mode = "region"
+    }
+
+    Shortcut {
+        sequence: "w"
+        onActivated: root.mode = "window"
+    }
+
+    Shortcut {
+        sequence: "s"
+        onActivated: {
+            root.mode = "screen";
+            saveScreenshot(0, 0, root.targetScreen.width, root.targetScreen.height);
+        }
+    }
+
     Timer {
         id: showTimer
 
