@@ -108,7 +108,7 @@ bind = SUPER SHIFT, S, exec, quickshell -c HyprQuickFrame -n
 # 2. Editor Mode (Annotation)
 # Opens the screenshot in Satty for editing before saving
 # Requires: satty
-bind = SUPER CTRL SHIFT, S, exec, HYPRSHOT_EDITOR=1 quickshell -c HyprQuickFrame -n
+bind = SUPER CTRL SHIFT, S, exec, HYPRQUICKFRAME_EDITOR=1 quickshell -c HyprQuickFrame -n
 ```
 
 ## Credit

@@ -18,7 +18,7 @@ FreezeScreen {
     property string mode: "region"
     property var modes: ["region", "window", "screen"]
     // Check for editor mode environment variable
-    property bool editorMode: Quickshell.env("HYPRSHOT_EDITOR") === "1"
+    property bool editorMode: Quickshell.env("HYPRQUICKFRAME_EDITOR") === "1"
 
     function saveScreenshot(x, y, width, height) {
         const scale = hyprlandMonitor.scale;
