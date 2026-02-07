@@ -38,7 +38,7 @@ FreezeScreen {
         const now = new Date();
         const timestamp = Qt.formatDateTime(now, "yyyy-MM-dd_hh-mm-ss");
         const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
-        const sattyCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${cropX}+${cropY} png:- | satty --filename - --fullscreen --output-filename "${outputPath}" --early-exit --init-tool brush && rm "${tempPath}"`;
+        const sattyCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${cropX}+${cropY} png:- | satty --filename - --fullscreen --output-filename "${outputPath}" --early-exit --init-tool brush --copy-command wl-copy && rm "${tempPath}"`;
         const defaultCommand = `magick "${tempPath}" -crop ${scaledWidth}x${scaledHeight}+${cropX}+${cropY} "${outputPath}" && wl-copy --type image/png < "${outputPath}" && notify-send -a "HyprQuickFrame" -i "${outputPath}" -h string:image-path:"${outputPath}" "Screenshot Saved" "Saved to Pictures/Screenshots" && rm "${tempPath}"`;
         screenshotProcess.command = ["sh", "-c", root.editorMode ? sattyCommand : defaultCommand];
         screenshotProcess.running = true;
