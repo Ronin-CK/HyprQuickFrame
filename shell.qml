@@ -20,16 +20,16 @@ FreezeScreen {
         // Calculate global bounds (grim captures the whole desktop starting from top-left-most point)
         let minX = 0;
         let minY = 0;
-        if (Hyprland.monitors) {
-            for (let i = 0; i < Hyprland.monitors.length; i++) {
-                const m = Hyprland.monitors[i];
-                minX = Math.min(minX, m.x);
-                minY = Math.min(minY, m.y);
-            }
+        const monitors = Hyprland.monitors.values;
+        for (const m of monitors) {
+            minX = Math.min(minX, m.lastIpcObject.x);
+            minY = Math.min(minY, m.lastIpcObject.y);
         }
         const scale = hyprlandMonitor.scale;
-        const globalX = Math.round((x + root.hyprlandMonitor.x) * scale);
-        const globalY = Math.round((y + root.hyprlandMonitor.y) * scale);
+        const monitorX = root.hyprlandMonitor.lastIpcObject.x;
+        const monitorY = root.hyprlandMonitor.lastIpcObject.y;
+        const globalX = Math.round((x + monitorX) * scale);
+        const globalY = Math.round((y + monitorY) * scale);
         const cropX = globalX - Math.round(minX * scale);
         const cropY = globalY - Math.round(minY * scale);
         const scaledWidth = Math.round(width * scale);
