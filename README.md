@@ -16,7 +16,6 @@ Features a modern overlay UI with shader-based dimming, "juicy" bouncy animation
     *   **Window**: Hovering over a window highlights it—click to capture.
     *   **Temp**: A "clipboard-only" mode. Great for quick sharing when you don't want to clutter your disk.
 *   **KDE Connect**: Push screenshots (and your clipboard) directly to your phone.
-*   **Feels Good**: The UI uses spring animations (`damping: 0.25`) so it feels responsive and playful, not static.
 *   **Fast**: It launches instantly. No waiting.
 *   **Editor Support**: If you have `satty` installed, you can annotate right after capturing.
 
