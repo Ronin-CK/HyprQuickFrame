@@ -94,6 +94,16 @@ Add the following keybinding to your `hyprland.conf`:
 bind = SUPER SHIFT, S, exec, quickshell -c HyprQuickFrame -n
 ```
 
+## 🛠️ Theme Configuration
+
+You can customize the look and feel by editing `theme.toml`. The application looks for the configuration file in the following order:
+
+1.  `~/.config/hyprquickframe/theme.toml` (Recommended for user customization)
+2.  `~/.config/quickshell/HyprQuickFrame/theme.toml`
+3.  `[Install Directory]/theme.toml` (Default fallback)
+
+Copy the default `theme.toml` to `~/.config/hyprquickframe/theme.toml` and edit it to your liking. New colors are applied instantly!
+
 ## ⚖️ License & Attribution
 
 This project is licensed under the **MIT License**.
