@@ -1,10 +1,4 @@
 /*
- * This file contains code based on "HyprQuickshot"
- * Original Author: JamDon2 (Copyright 2025)
- * Licensed under the MIT License.
- *
- * Modifications and other code: Copyright (c) 2026 Ronin-CK
- *
  * Copyright (c) 2025 JamDon2
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
