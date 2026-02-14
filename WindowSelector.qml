@@ -25,7 +25,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 import QtQuick  
 import Quickshell.Hyprland
 
@@ -56,10 +55,12 @@ Item {
     property real selectionWidth: 0  
     property real selectionHeight: 0  
       
-    Behavior on selectionX { SpringAnimation { spring: 4; damping: 0.4 } }  
-    Behavior on selectionY { SpringAnimation { spring: 4; damping: 0.4 } }  
-    Behavior on selectionHeight { SpringAnimation { spring: 4; damping: 0.4 } }  
-    Behavior on selectionWidth { SpringAnimation { spring: 4; damping: 0.4 } }  
+    property bool animateSelection: true
+
+    Behavior on selectionX { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
+    Behavior on selectionY { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
+    Behavior on selectionHeight { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
+    Behavior on selectionWidth { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }  
       
 
     ShaderEffect {  
