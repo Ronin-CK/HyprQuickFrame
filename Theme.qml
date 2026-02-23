@@ -31,6 +31,7 @@ QtObject {
     readonly property color sharePending: _get("sharePending", "#95A5A6")
     readonly property color shareErrorIcon: _get("shareErrorIcon", "white")
     readonly property color shareErrorBackground: _get("shareErrorBackground", "#E74C3C")
+    readonly property string postSaveHook: source.hooksPostSaveHook || ""
 
     function _get(key, fallback) {
         let val = source[key];
