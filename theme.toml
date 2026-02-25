@@ -47,3 +47,8 @@ pending = "#95A5A6"
 errorIcon = "white"
 # Background color on connection failure
 errorBackground = "#E74C3C"
+
+[hooks]
+# Command to run after a screenshot is saved (leave empty to disable)
+# Placeholders: %f = full path, %n = filename, %d = directory, %t = timestamp
+postSaveHook = "~/.local/bin/screenshot-hook.sh %f"

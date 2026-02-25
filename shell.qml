@@ -26,6 +26,8 @@ FreezeScreen {
     property bool editActive: false
     property bool shareActive: false
     property int connectivityStatus: 0
+    property string lastSavedPath: ""
+    property string lastTimestamp: ""
     readonly property real tabItemSize: 100
     readonly property real controlHeight: 50
     readonly property real targetMenuWidth: (modes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * tabItemSize + 8
@@ -103,6 +105,21 @@ FreezeScreen {
         Quickshell.execDetached(["rm", "-f", tempPath]);
     }
 
+    function runPostSaveHook() {
+        const hook = theme.postSaveHook;
+        if (!hook || !root.lastSavedPath)
+            return;
+        const filePath = root.lastSavedPath;
+        const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
+        let cmd = hook;
+        cmd = cmd.replace(/%f/g, shellEscape(filePath));
+        cmd = cmd.replace(/%n/g, shellEscape(fileName));
+        cmd = cmd.replace(/%d/g, shellEscape(dirPath));
+        cmd = cmd.replace(/%t/g, shellEscape(root.lastTimestamp));
+        Quickshell.execDetached(["sh", "-c", cmd]);
+    }
+
     function saveScreenshot(x, y, width, height) {
         const crop = calculateCrop(x, y, width, height);
         const picturesBase = Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures");
@@ -110,6 +127,8 @@ FreezeScreen {
         const now = new Date();
         const timestamp = Qt.formatDateTime(now, "yyyy-MM-dd_hh-mm-ss");
         const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
+        root.lastTimestamp = timestamp;
+        root.lastSavedPath = root.tempActive ? "" : outputPath;
         const tempSnip = Quickshell.cachePath(`snip-${timestamp}.png`);
         const ePicturesDir = shellEscape(picturesDir);
         const eOutputPath = shellEscape(outputPath);
@@ -292,7 +311,8 @@ FreezeScreen {
         onExited: (code) => {
             if (code !== 0)
                 console.error("Screenshot pipeline failed with exit code:", code);
-
+            else
+                root.runPostSaveHook();
             Qt.quit();
         }
 
