@@ -29,14 +29,22 @@ text = "#AAFFFFFF"
 shadow = "#80000000"
 
 [toggle]
-# Pill background for edit/temp/share buttons
-background = "white"
-# Drop shadow under toggle pills
-shadow = "#80000000"
 # Edit toggle icon color
 edit = "#1ABC9C"
+# Edit toggle background
+editBackground = "white"
+# Edit toggle shadow
+editShadow = "#80000000"
 # Temp toggle icon color
 temp = "#2C66D8"
+# Temp toggle background
+tempBackground = "white"
+# Temp toggle shadow
+tempShadow = "#80000000"
+# Share toggle background (when connected/pending)
+shareBackground = "white"
+# Share toggle shadow
+shareShadow = "#80000000"
 
 [share]
 # Icon color when device is reachable
@@ -47,6 +55,8 @@ pending = "#95A5A6"
 errorIcon = "white"
 # Background color on connection failure
 errorBackground = "#E74C3C"
+# Shadow color on connection failure
+errorShadow = "#80000000"
 
 [hooks]
 # Command to run after a screenshot is saved (leave empty to disable)

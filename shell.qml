@@ -251,6 +251,14 @@ FreezeScreen {
     }
 
     Shortcut {
+        sequence: "q"
+        onActivated: {
+            cleanup();
+            Qt.quit();
+        }
+    }
+
+    Shortcut {
         sequence: "r"
         onActivated: root.mode = "region"
     }
@@ -523,8 +531,8 @@ FreezeScreen {
         active: root.editActive
         icon: "󰏫"
         iconColor: theme.toggleEdit
-        backgroundColor: theme.toggleBackground
-        shadowColor: theme.toggleShadow
+        backgroundColor: theme.toggleEditBackground
+        shadowColor: theme.toggleEditShadow
         targetX: (root.width - root.targetMenuWidth) / 2 - 15 - width
         targetY: segmentedControl.y + segmentedControl.height / 2
         sourceX: root.width / 2 - 204 + 32
@@ -537,8 +545,8 @@ FreezeScreen {
         active: root.tempActive
         icon: "󰅇"
         iconColor: theme.toggleTemp
-        backgroundColor: theme.toggleBackground
-        shadowColor: theme.toggleShadow
+        backgroundColor: theme.toggleTempBackground
+        shadowColor: theme.toggleTempShadow
         targetX: (root.width + root.targetMenuWidth) / 2 + 15
         targetY: segmentedControl.y + segmentedControl.height / 2
         sourceX: root.width / 2 - 204 + 332
@@ -559,8 +567,8 @@ FreezeScreen {
 
             return theme.sharePending;
         }
-        backgroundColor: root.connectivityStatus === 2 ? theme.shareErrorBackground : theme.toggleBackground
-        shadowColor: theme.toggleShadow
+        backgroundColor: root.connectivityStatus === 2 ? theme.shareErrorBackground : theme.toggleShareBackground
+        shadowColor: root.connectivityStatus === 2 ? theme.shareErrorShadow : theme.toggleShareShadow
         pulse: root.connectivityStatus === 0
         targetX: (root.width + root.targetMenuWidth) / 2 + 15 + (root.tempActive ? 44 + 10 : 0)
         targetY: segmentedControl.y + segmentedControl.height / 2

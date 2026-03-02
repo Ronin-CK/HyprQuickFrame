@@ -23,14 +23,19 @@ QtObject {
     readonly property color barBorder: _get("barBorder", Qt.rgba(1, 1, 1, 0.15))
     readonly property color barText: _get("barText", "#AAFFFFFF")
     readonly property color barShadow: _get("barShadow", "#80000000")
-    readonly property color toggleBackground: _get("toggleBackground", "white")
-    readonly property color toggleShadow: _get("toggleShadow", "#80000000")
     readonly property color toggleEdit: _get("toggleEdit", "#1ABC9C")
+    readonly property color toggleEditBackground: _get("toggleEditBackground", "white")
+    readonly property color toggleEditShadow: _get("toggleEditShadow", "#80000000")
     readonly property color toggleTemp: _get("toggleTemp", "#2C66D8")
+    readonly property color toggleTempBackground: _get("toggleTempBackground", "white")
+    readonly property color toggleTempShadow: _get("toggleTempShadow", "#80000000")
+    readonly property color toggleShareBackground: _get("toggleShareBackground", "white")
+    readonly property color toggleShareShadow: _get("toggleShareShadow", "#80000000")
     readonly property color shareConnected: _get("shareConnected", "#3498DB")
     readonly property color sharePending: _get("sharePending", "#95A5A6")
     readonly property color shareErrorIcon: _get("shareErrorIcon", "white")
     readonly property color shareErrorBackground: _get("shareErrorBackground", "#E74C3C")
+    readonly property color shareErrorShadow: _get("shareErrorShadow", "#80000000")
     readonly property string postSaveHook: source.hooksPostSaveHook || ""
 
     function _get(key, fallback) {
