@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Controls
 import Quickshell
