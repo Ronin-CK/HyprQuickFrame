@@ -1,4 +1,3 @@
-import Qt5Compat.GraphicalEffects
 import QtQuick
 
 Rectangle {
@@ -22,7 +21,6 @@ Rectangle {
     color: theme ? theme.barBackground : "transparent"
     border.color: theme ? theme.barBorder : "transparent"
     border.width: 1
-    layer.enabled: true
 
     Rectangle {
         id: highlight
@@ -138,14 +136,6 @@ Rectangle {
             mass: 1
         }
 
-    }
-
-    layer.effect: DropShadow {
-        transparentBorder: true
-        radius: 8
-        samples: 16
-        color: theme ? theme.barShadow : "black"
-        verticalOffset: 4
     }
 
 }
