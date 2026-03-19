@@ -26,7 +26,7 @@ Features a modern overlay UI with shader-based dimming, "juicy" bouncy animation
 *   `s`: Full Screen Capture
 *   `t`: Toggle Temp Mode
 *   `k`: Toggle KDE Share
-*   `Escape`: Quit
+*   `Escape`, `q`: Quit
 
 ## 🎥 Demo
 https://github.com/user-attachments/assets/1cb331a7-c9d2-474f-96e2-d78a18bd3a5c
