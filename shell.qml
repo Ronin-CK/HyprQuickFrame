@@ -14,10 +14,9 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import "components"
 
-FreezeScreen {
+Scope {
     id: root
 
-    property var activeScreen: null
     property var hyprlandMonitor: Hyprland.focusedMonitor
     property string tempPath: ""
     property string mode: "region"
@@ -28,6 +27,7 @@ FreezeScreen {
     property int connectivityStatus: 0
     property string lastSavedPath: ""
     property string lastTimestamp: ""
+    property bool overlayVisible: false
     readonly property real targetMenuWidth: (modes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * 100 + 8
 
     function parseTOML(text) {
@@ -79,17 +79,23 @@ FreezeScreen {
         return "'" + s.replace(/'/g, "'\\''") + "'";
     }
 
-    function calculateCrop(x, y, width, height) {
+    function calculateCrop(x, y, width, height, screenName) {
         let minX = Infinity;
         let minY = Infinity;
+        let targetMonitor = null;
         const monitors = Hyprland.monitors.values;
         for (const m of monitors) {
             minX = Math.min(minX, m.lastIpcObject.x);
             minY = Math.min(minY, m.lastIpcObject.y);
+            if (m.name === screenName)
+                targetMonitor = m;
         }
-        const scale = hyprlandMonitor.scale;
-        const monitorX = root.hyprlandMonitor.lastIpcObject.x;
-        const monitorY = root.hyprlandMonitor.lastIpcObject.y;
+        if (!targetMonitor)
+            targetMonitor = hyprlandMonitor;
+
+        const scale = targetMonitor.scale;
+        const monitorX = targetMonitor.lastIpcObject.x;
+        const monitorY = targetMonitor.lastIpcObject.y;
         const globalX = Math.round((x + monitorX) * scale);
         const globalY = Math.round((y + monitorY) * scale);
         return {
@@ -120,8 +126,8 @@ FreezeScreen {
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 
-    function saveScreenshot(x, y, width, height) {
-        const crop = calculateCrop(x, y, width, height);
+    function saveScreenshot(x, y, width, height, screenName) {
+        const crop = calculateCrop(x, y, width, height, screenName);
         const picturesBase = Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures");
         const picturesDir = picturesBase + "/Screenshots";
         const now = new Date();
@@ -155,11 +161,9 @@ FreezeScreen {
             cmd = defaultSaveCommand;
         screenshotProcess.command = ["sh", "-c", cmd];
         screenshotProcess.running = true;
-        root.visible = false;
+        root.overlayVisible = false;
     }
 
-    visible: false
-    targetScreen: activeScreen
     Component.onCompleted: {
         const timestamp = Date.now();
         const rand = Math.floor(Math.random() * 100000);
@@ -185,8 +189,10 @@ FreezeScreen {
     }
 
     Theme {
-        id: theme
+        id: themeObj
     }
+
+    property var theme: themeObj
 
     FileView {
         id: themeFile
@@ -206,7 +212,7 @@ FreezeScreen {
         onTextChanged: {
             try {
                 let rawText = (typeof text === 'function') ? text() : text;
-                theme.source = root.parseTOML(rawText);
+                themeObj.source = root.parseTOML(rawText);
             } catch (e) {
                 console.warn("Failed to parse theme.toml:", e);
             }
@@ -227,83 +233,13 @@ FreezeScreen {
 
     }
 
-    Connections {
-        function onFocusedMonitorChanged() {
-            const monitor = Hyprland.focusedMonitor;
-            if (!monitor)
-                return ;
-
-            for (const screen of Quickshell.screens) {
-                if (screen.name === monitor.name)
-                    activeScreen = screen;
-
-            }
-        }
-
-        target: Hyprland
-        enabled: activeScreen === null
-    }
-
-    Shortcut {
-        sequences: ["Escape", "q"]
-        onActivated: {
-            cleanup();
-            Qt.quit();
-        }
-    }
-
-    Shortcut {
-        sequence: "r"
-        onActivated: root.mode = "region"
-    }
-
-    Shortcut {
-        sequence: "w"
-        onActivated: root.mode = "window"
-    }
-
-    Shortcut {
-        sequence: "s"
-        onActivated: root.saveScreenshot(0, 0, root.width, root.height)
-    }
-
-    Shortcut {
-        sequence: "e"
-        onActivated: {
-            root.editActive = !root.editActive;
-            if (root.editActive)
-                root.tempActive = false;
-
-        }
-    }
-
-    Shortcut {
-        sequence: "t"
-        onActivated: {
-            root.tempActive = !root.tempActive;
-            if (root.tempActive)
-                root.editActive = false;
-
-        }
-    }
-
-    Shortcut {
-        sequence: "k"
-        onActivated: {
-            root.shareActive = !root.shareActive;
-            if (root.shareActive && !connectivityProcess.running && root.connectivityStatus !== 0)
-                connectivityProcess.running = true;
-
-        }
-    }
-
     Timer {
         id: showTimer
 
         interval: 50
         running: false
         repeat: false
-        onTriggered: root.visible = true
+        onTriggered: root.overlayVisible = true
     }
 
     Process {
@@ -345,136 +281,214 @@ FreezeScreen {
         }
     }
 
-    RegionSelector {
-        id: regionSelector
+    Variants {
+        model: Quickshell.screens
 
-        visible: mode === "region"
-        anchors.fill: parent
-        dimOpacity: theme.dimOpacity
-        borderRadius: theme.borderRadius
-        outlineThickness: theme.outlineThickness
-        globalAnimations: theme.animations
-        onRegionSelected: (x, y, width, height) => {
-            saveScreenshot(x, y, width, height);
-        }
-    }
+        FreezeScreen {
+            id: overlay
 
-    WindowSelector {
-        id: windowSelector
+            required property var modelData
 
-        visible: mode === "window"
-        anchors.fill: parent
-        monitor: root.hyprlandMonitor
-        dimOpacity: theme.dimOpacity
-        borderRadius: theme.borderRadius
-        outlineThickness: theme.outlineThickness
-        animateSelection: theme.animations
-        onRegionSelected: (x, y, width, height) => {
-            saveScreenshot(x, y, width, height);
-        }
-    }
+            targetScreen: modelData
+            visible: root.overlayVisible
 
-    ControlBar {
-        id: segmentedControl
+            property bool isFocused: root.hyprlandMonitor ? modelData.name === root.hyprlandMonitor.name : true
+            property var themeRef: root.theme
 
-        modes: root.modes
-        mode: root.mode
-        tempActive: root.tempActive
-        editActive: root.editActive
-        theme: theme
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: theme.bottomMargin
-        onModeSelected: (m) => {
-            return root.mode = m;
-        }
-        onTempToggled: {
-            root.tempActive = true;
-            root.editActive = false;
-        }
-        onEditToggled: {
-            root.editActive = true;
-            root.tempActive = false;
-        }
-    }
-
-    QuickToggle {
-        id: editToggleButton
-
-        active: root.editActive
-        icon: "" // "󰏫"
-        imageSource: Qt.resolvedUrl("assets/icons/edit.svg")
-        iconColor: theme.toggleEdit
-        backgroundColor: theme.toggleBackground
-        shadowColor: theme.toggleShadow
-        borderColor: theme.barBorder
-        borderWidth: 1
-        targetX: (root.width - root.targetMenuWidth) / 2 - 15 - width
-        targetY: segmentedControl.y + segmentedControl.height / 2
-        sourceX: root.width / 2 - 204 + 32
-        onClicked: root.editActive = false
-    }
-
-    QuickToggle {
-        id: tempToggleButton
-
-        active: root.tempActive
-        icon: "" // "󰏫"
-        imageSource: Qt.resolvedUrl("assets/icons/temp.svg")
-        iconColor: theme.toggleTemp
-        backgroundColor: theme.toggleBackground
-        shadowColor: theme.toggleShadow
-        borderColor: theme.barBorder
-        borderWidth: 1
-        targetX: (root.width + root.targetMenuWidth) / 2 + 15
-        targetY: segmentedControl.y + segmentedControl.height / 2
-        sourceX: root.width / 2 - 204 + 332
-        onClicked: root.tempActive = false
-    }
-
-    QuickToggle {
-        id: shareToggleButton
-
-        active: root.shareActive
-        icon: "" // "󰄜"
-        imageSource: root.connectivityStatus === 2 ? Qt.resolvedUrl("assets/icons/share-error.svg") : Qt.resolvedUrl("assets/icons/share.svg")
-        iconColor: {
-            if (root.connectivityStatus === 1)
-                return theme.shareConnected;
-
-            if (root.connectivityStatus === 2)
-                return theme.shareErrorIcon;
-
-            return theme.sharePending;
-        }
-        backgroundColor: root.connectivityStatus === 2 ? theme.shareErrorBackground : theme.toggleBackground
-        shadowColor: theme.toggleShadow
-        borderColor: theme.barBorder
-        borderWidth: 1
-        pulse: root.connectivityStatus === 0
-        targetX: (root.width + root.targetMenuWidth) / 2 + 15 + (root.tempActive ? 44 + 10 : 0)
-        targetY: segmentedControl.y + segmentedControl.height / 2
-        sourceX: root.width / 2 + (root.targetMenuWidth / 2) - 22
-        onClicked: root.shareActive = false
-    }
-
-    Item {
-        anchors.fill: parent
-        z: 999
-
-        HoverHandler {
-            onPointChanged: {
-                if (root.mode === "region" && !regionSelector.pressed) {
-                    regionSelector.mouseX = point.position.x;
-                    regionSelector.mouseY = point.position.y;
+            // Resolve the Hyprland monitor object for this screen
+            property var hyprMonitor: {
+                const monitors = Hyprland.monitors.values;
+                for (const m of monitors) {
+                    if (m.name === modelData.name)
+                        return m;
                 }
-                if (root.mode === "window" && !windowSelector.pressed) {
-                    windowSelector.mouseX = point.position.x;
-                    windowSelector.mouseY = point.position.y;
+                return null;
+            }
+
+            Shortcut {
+                sequences: ["Escape", "q"]
+                onActivated: {
+                    root.cleanup();
+                    Qt.quit();
+                }
+            }
+
+            Shortcut {
+                sequence: "r"
+                onActivated: root.mode = "region"
+            }
+
+            Shortcut {
+                sequence: "w"
+                onActivated: root.mode = "window"
+            }
+
+            Shortcut {
+                sequence: "s"
+                onActivated: root.saveScreenshot(0, 0, overlay.width, overlay.height, overlay.modelData.name)
+            }
+
+            Shortcut {
+                sequence: "e"
+                onActivated: {
+                    root.editActive = !root.editActive;
+                    if (root.editActive)
+                        root.tempActive = false;
+                }
+            }
+
+            Shortcut {
+                sequence: "t"
+                onActivated: {
+                    root.tempActive = !root.tempActive;
+                    if (root.tempActive)
+                        root.editActive = false;
+                }
+            }
+
+            Shortcut {
+                sequence: "k"
+                onActivated: {
+                    root.shareActive = !root.shareActive;
+                    if (root.shareActive && !connectivityProcess.running && root.connectivityStatus !== 0)
+                        connectivityProcess.running = true;
+                }
+            }
+
+            RegionSelector {
+                id: regionSelector
+
+                visible: root.mode === "region"
+                anchors.fill: parent
+                dimOpacity: overlay.themeRef.dimOpacity
+                borderRadius: overlay.themeRef.borderRadius
+                outlineThickness: overlay.themeRef.outlineThickness
+                globalAnimations: overlay.themeRef.animations
+                onRegionSelected: (x, y, width, height) => {
+                    root.saveScreenshot(x, y, width, height, overlay.modelData.name);
+                }
+            }
+
+            WindowSelector {
+                id: windowSelector
+
+                visible: root.mode === "window"
+                anchors.fill: parent
+                monitor: overlay.hyprMonitor
+                dimOpacity: overlay.themeRef.dimOpacity
+                borderRadius: overlay.themeRef.borderRadius
+                outlineThickness: overlay.themeRef.outlineThickness
+                animateSelection: overlay.themeRef.animations
+                onRegionSelected: (x, y, width, height) => {
+                    root.saveScreenshot(x, y, width, height, overlay.modelData.name);
+                }
+            }
+
+            ControlBar {
+                id: segmentedControl
+
+                visible: overlay.isFocused
+                modes: root.modes
+                mode: root.mode
+                tempActive: root.tempActive
+                editActive: root.editActive
+                theme: overlay.themeRef
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: overlay.themeRef ? overlay.themeRef.bottomMargin : 60
+                onModeSelected: (m) => {
+                    return root.mode = m;
+                }
+                onTempToggled: {
+                    root.tempActive = true;
+                    root.editActive = false;
+                }
+                onEditToggled: {
+                    root.editActive = true;
+                    root.tempActive = false;
+                }
+            }
+
+            QuickToggle {
+                id: editToggleButton
+
+                visible: overlay.isFocused
+                active: root.editActive
+                icon: "" // "󰏫"
+                imageSource: Qt.resolvedUrl("assets/icons/edit.svg")
+                iconColor: overlay.themeRef.toggleEdit
+                backgroundColor: overlay.themeRef.toggleBackground
+                shadowColor: overlay.themeRef.toggleShadow
+                borderColor: overlay.themeRef.barBorder
+                borderWidth: 1
+                targetX: (overlay.width - root.targetMenuWidth) / 2 - 15 - width
+                targetY: segmentedControl.y + segmentedControl.height / 2
+                sourceX: overlay.width / 2 - 204 + 32
+                onClicked: root.editActive = false
+            }
+
+            QuickToggle {
+                id: tempToggleButton
+
+                visible: overlay.isFocused
+                active: root.tempActive
+                icon: "" // "󰏫"
+                imageSource: Qt.resolvedUrl("assets/icons/temp.svg")
+                iconColor: overlay.themeRef.toggleTemp
+                backgroundColor: overlay.themeRef.toggleBackground
+                shadowColor: overlay.themeRef.toggleShadow
+                borderColor: overlay.themeRef.barBorder
+                borderWidth: 1
+                targetX: (overlay.width + root.targetMenuWidth) / 2 + 15
+                targetY: segmentedControl.y + segmentedControl.height / 2
+                sourceX: overlay.width / 2 - 204 + 332
+                onClicked: root.tempActive = false
+            }
+
+            QuickToggle {
+                id: shareToggleButton
+
+                visible: overlay.isFocused
+                active: root.shareActive
+                icon: "" // "󰄜"
+                imageSource: root.connectivityStatus === 2 ? Qt.resolvedUrl("assets/icons/share-error.svg") : Qt.resolvedUrl("assets/icons/share.svg")
+                iconColor: {
+                    if (root.connectivityStatus === 1)
+                        return overlay.themeRef.shareConnected;
+                    if (root.connectivityStatus === 2)
+                        return overlay.themeRef.shareErrorIcon;
+                    return overlay.themeRef.sharePending;
+                }
+                backgroundColor: root.connectivityStatus === 2 ? overlay.themeRef.shareErrorBackground : overlay.themeRef.toggleBackground
+                shadowColor: overlay.themeRef.toggleShadow
+                borderColor: overlay.themeRef.barBorder
+                borderWidth: 1
+                pulse: root.connectivityStatus === 0
+                targetX: (overlay.width + root.targetMenuWidth) / 2 + 15 + (root.tempActive ? 44 + 10 : 0)
+                targetY: segmentedControl.y + segmentedControl.height / 2
+                sourceX: overlay.width / 2 + (root.targetMenuWidth / 2) - 22
+                onClicked: root.shareActive = false
+            }
+
+            Item {
+                anchors.fill: parent
+                z: 999
+
+                HoverHandler {
+                    onPointChanged: {
+                        if (root.mode === "region" && !regionSelector.pressed) {
+                            regionSelector.mouseX = point.position.x;
+                            regionSelector.mouseY = point.position.y;
+                        }
+                        if (root.mode === "window" && !windowSelector.pressed) {
+                            windowSelector.mouseX = point.position.x;
+                            windowSelector.mouseY = point.position.y;
+                        }
+                    }
                 }
             }
         }
-
     }
 
 }
