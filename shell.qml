@@ -477,14 +477,10 @@ Scope {
 
                 HoverHandler {
                     onPointChanged: {
-                        if (root.mode === "region" && !regionSelector.pressed) {
-                            regionSelector.mouseX = point.position.x;
-                            regionSelector.mouseY = point.position.y;
-                        }
-                        if (root.mode === "window" && !windowSelector.pressed) {
-                            windowSelector.mouseX = point.position.x;
-                            windowSelector.mouseY = point.position.y;
-                        }
+                        regionSelector.mouseX = point.position.x;
+                        regionSelector.mouseY = point.position.y;
+                        windowSelector.mouseX = point.position.x;
+                        windowSelector.mouseY = point.position.y;
                     }
                 }
             }
