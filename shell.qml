@@ -291,6 +291,12 @@ Scope {
 
             targetScreen: modelData
             visible: root.overlayVisible
+            onVisibleChanged: {
+                if (visible && isFocused) {
+                    // compute the inital mouse pos
+                    cursorPosProcess.running = true;
+                }
+            }
 
             property bool isFocused: root.hyprlandMonitor ? modelData.name === root.hyprlandMonitor.name : true
             property var themeRef: root.theme
@@ -303,6 +309,31 @@ Scope {
                         return m;
                 }
                 return null;
+            }
+
+            // process to determine the mouse pos (without relying on onPointChanged)
+            // need this workaround for it to work also on multi-monitor
+            Process {
+                id: cursorPosProcess
+                command: ["hyprctl", "cursorpos", "-j"]
+                running: false
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        try {
+                            const pos = JSON.parse(this.text.trim());
+                            const monitorPos = Qt.point(
+                                pos.x - modelData.x,
+                                pos.y - modelData.y
+                            );
+                            regionSelector.mouseX = monitorPos.x;
+                            regionSelector.mouseY = monitorPos.y;
+                            windowSelector.mouseX = monitorPos.x;
+                            windowSelector.mouseY = monitorPos.y;
+                        } catch(e) {
+                            console.warn("Failed to parse cursorpos:", e);
+                        }
+                    }
+                }
             }
 
             Shortcut {
@@ -477,10 +508,14 @@ Scope {
 
                 HoverHandler {
                     onPointChanged: {
-                        regionSelector.mouseX = point.position.x;
-                        regionSelector.mouseY = point.position.y;
-                        windowSelector.mouseX = point.position.x;
-                        windowSelector.mouseY = point.position.y;
+                        if (root.mode === "region" && !regionSelector.pressed) {
+                            regionSelector.mouseX = point.position.x;
+                            regionSelector.mouseY = point.position.y;
+                        }
+                        if (root.mode === "window" && !windowSelector.pressed) {
+                            windowSelector.mouseX = point.position.x;
+                            windowSelector.mouseY = point.position.y;
+                        }
                     }
                 }
             }
