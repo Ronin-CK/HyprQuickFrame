@@ -29,12 +29,14 @@ Scope {
     property string lastTimestamp: ""
     property bool overlayVisible: false
     readonly property real targetMenuWidth: (modes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * 100 + 8
+    readonly property int captureScale: hyprlandMonitor ? Math.ceil(hyprlandMonitor.scale) : 1
+    property var theme: themeObj
 
     function parseTOML(text) {
         let result = {
         };
         let section = "";
-        const lines = text.split(/\r?\n/);
+        const lines = text.split(/\r?\n/);A
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
             if (!line || line.startsWith("#"))
@@ -89,11 +91,12 @@ Scope {
             minY = Math.min(minY, m.lastIpcObject.y);
             if (m.name === screenName)
                 targetMonitor = m;
+
         }
         if (!targetMonitor)
             targetMonitor = hyprlandMonitor;
 
-        const scale = targetMonitor.scale;
+        const scale = root.captureScale;
         const monitorX = targetMonitor.lastIpcObject.x;
         const monitorY = targetMonitor.lastIpcObject.y;
         const globalX = Math.round((x + monitorX) * scale);
@@ -146,7 +149,7 @@ Scope {
         };
         const shareTag = root.shareActive ? " & phone" : "";
         const mkdirCmd = `mkdir -p ${ePicturesDir}`;
-        const cropCmd = `magick ${eTempPath} -crop ` + `${crop.scaledWidth}x${crop.scaledHeight}` + `+${crop.cropX}+${crop.cropY}`;
+        const cropCmd = `magick ${eTempPath} -crop ` + `${crop.scaledWidth}x${crop.scaledHeight}` + `+${crop.cropX}+${crop.cropY} +repage`;
         const sattyCommand = `${mkdirCmd} && ${cropCmd} png:- ` + `| satty --filename - ` + `--output-filename ${eOutputPath} --early-exit --init-tool brush ` + `&& wl-copy --type image/png < ${eOutputPath}` + `${maybeShare(eOutputPath)}; rm -f ${eTempPath}`;
         const gradiaCommand = `${mkdirCmd} && ${cropCmd} ${eOutputPath} && hyprctl dispatch exec -- "gradia ${eOutputPath} || flatpak run be.alexandervanhee.gradia ${eOutputPath}"; sleep 0.5; rm -f ${eTempPath}`;
         const defaultSaveCommand = `${mkdirCmd} && ${cropCmd} ${eOutputPath} ` + `&& wl-copy --type image/png < ${eOutputPath}` + `${maybeShare(eOutputPath)} ` + `&& notify-send -a "HyprQuickFrame" -i ${eOutputPath} ` + `-h string:image-path:${eOutputPath} "Screenshot Saved" ` + `"Saved to ${picturesDir}"; rm -f ${eTempPath}`;
@@ -169,7 +172,7 @@ Scope {
         const rand = Math.floor(Math.random() * 100000);
         const path = Quickshell.cachePath(`screenshot-${timestamp}-${rand}.png`);
         tempPath = path;
-        captureProcess.command = ["grim", "-l", "0", path];
+        captureProcess.command = ["grim", "-l", "0", "-s", String(root.captureScale), path];
         captureProcess.running = true;
         connectivityProcess.running = true;
     }
@@ -191,8 +194,6 @@ Scope {
     Theme {
         id: themeObj
     }
-
-    property var theme: themeObj
 
     FileView {
         id: themeFile
@@ -288,52 +289,47 @@ Scope {
             id: overlay
 
             required property var modelData
-
-            targetScreen: modelData
-            visible: root.overlayVisible
-            onVisibleChanged: {
-                if (visible && isFocused) {
-                    // compute the inital mouse pos
-                    cursorPosProcess.running = true;
-                }
-            }
-
             property bool isFocused: root.hyprlandMonitor ? modelData.name === root.hyprlandMonitor.name : true
             property var themeRef: root.theme
-
-            // Resolve the Hyprland monitor object for this screen
             property var hyprMonitor: {
                 const monitors = Hyprland.monitors.values;
                 for (const m of monitors) {
                     if (m.name === modelData.name)
                         return m;
+
                 }
                 return null;
             }
 
-            // process to determine the mouse pos (without relying on onPointChanged)
-            // need this workaround for it to work also on multi-monitor
+            targetScreen: modelData
+            visible: root.overlayVisible
+            onVisibleChanged: {
+                if (visible && isFocused)
+                    cursorPosProcess.running = true;
+
+            }
+
             Process {
                 id: cursorPosProcess
+
                 command: ["hyprctl", "cursorpos", "-j"]
                 running: false
+
                 stdout: StdioCollector {
                     onStreamFinished: {
                         try {
                             const pos = JSON.parse(this.text.trim());
-                            const monitorPos = Qt.point(
-                                pos.x - modelData.x,
-                                pos.y - modelData.y
-                            );
+                            const monitorPos = Qt.point(pos.x - modelData.x, pos.y - modelData.y);
                             regionSelector.mouseX = monitorPos.x;
                             regionSelector.mouseY = monitorPos.y;
                             windowSelector.mouseX = monitorPos.x;
                             windowSelector.mouseY = monitorPos.y;
-                        } catch(e) {
+                        } catch (e) {
                             console.warn("Failed to parse cursorpos:", e);
                         }
                     }
                 }
+
             }
 
             Shortcut {
@@ -365,6 +361,7 @@ Scope {
                     root.editActive = !root.editActive;
                     if (root.editActive)
                         root.tempActive = false;
+
                 }
             }
 
@@ -374,6 +371,7 @@ Scope {
                     root.tempActive = !root.tempActive;
                     if (root.tempActive)
                         root.editActive = false;
+
                 }
             }
 
@@ -383,6 +381,7 @@ Scope {
                     root.shareActive = !root.shareActive;
                     if (root.shareActive && !connectivityProcess.running && root.connectivityStatus !== 0)
                         connectivityProcess.running = true;
+
                 }
             }
 
@@ -424,7 +423,6 @@ Scope {
                 tempActive: root.tempActive
                 editActive: root.editActive
                 theme: overlay.themeRef
-
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: overlay.themeRef ? overlay.themeRef.bottomMargin : 60
@@ -487,8 +485,10 @@ Scope {
                 iconColor: {
                     if (root.connectivityStatus === 1)
                         return overlay.themeRef.shareConnected;
+
                     if (root.connectivityStatus === 2)
                         return overlay.themeRef.shareErrorIcon;
+
                     return overlay.themeRef.sharePending;
                 }
                 backgroundColor: root.connectivityStatus === 2 ? overlay.themeRef.shareErrorBackground : overlay.themeRef.toggleBackground
@@ -518,8 +518,11 @@ Scope {
                         }
                     }
                 }
+
             }
+
         }
+
     }
 
 }
