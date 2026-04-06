@@ -301,6 +301,7 @@ Scope {
             }
 
             targetScreen: modelData
+            grabKeyboard: isFocused
             visible: root.overlayVisible
             onVisibleChanged: {
                 if (visible && isFocused)
