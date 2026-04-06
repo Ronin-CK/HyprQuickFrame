@@ -35,7 +35,7 @@ Scope {
         let result = {
         };
         let section = "";
-        const lines = text.split(/\r?\n/);A
+        const lines = text.split(/\r?\n/);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
             if (!line || line.startsWith("#"))
