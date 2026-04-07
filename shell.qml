@@ -341,6 +341,16 @@ Scope {
             }
 
             Shortcut {
+                sequence: "Return"
+                onActivated: {
+                    if (root.mode === "region")
+                        root.saveScreenshot(regionSelector.selectionX, regionSelector.selectionY, regionSelector.selectionWidth, regionSelector.selectionHeight, overlay.modelData.name)
+                    if (root.mode === "window")
+                        root.saveScreenshot(windowSelector.selectionX, windowSelector.selectionY, windowSelector.selectionWidth, windowSelector.selectionHeight, overlay.modelData.name)
+                }
+            }
+
+            Shortcut {
                 sequence: "r"
                 onActivated: root.mode = "region"
             }
