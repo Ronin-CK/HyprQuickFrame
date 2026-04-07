@@ -343,10 +343,12 @@ Scope {
             Shortcut {
                 sequence: "Return"
                 onActivated: {
-                    if (root.mode === "region")
-                        root.saveScreenshot(regionSelector.selectionX, regionSelector.selectionY, regionSelector.selectionWidth, regionSelector.selectionHeight, overlay.modelData.name)
-                    if (root.mode === "window")
-                        root.saveScreenshot(windowSelector.selectionX, windowSelector.selectionY, windowSelector.selectionWidth, windowSelector.selectionHeight, overlay.modelData.name)
+                    const selector = root.mode === "region" ? regionSelector : windowSelector;
+                    root.saveScreenshot(selector.selectionX,
+                        selector.selectionY,
+                        selector.selectionWidth,
+                        selector.selectionHeight,
+                        overlay.modelData.name)
                 }
             }
 
