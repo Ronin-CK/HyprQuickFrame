@@ -18,12 +18,13 @@ Scope {
     id: root
 
     property var hyprlandMonitor: Hyprland.focusedMonitor
+    property string activeScreenName: hyprlandMonitor ? hyprlandMonitor.name : (Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "")
     property string tempPath: ""
-    property string mode: "region"
+    property string mode: ["region", "window"].indexOf(Quickshell.env("HQF_MODE")) !== -1 ? Quickshell.env("HQF_MODE") : "region"
     property var modes: ["edit", "region", "window", "temp"]
-    property bool tempActive: false
-    property bool editActive: false
-    property bool shareActive: false
+    property bool tempActive: Quickshell.env("HQF_ACTION") === "temp"
+    property bool editActive: Quickshell.env("HQF_ACTION") === "edit"
+    property bool shareActive: Quickshell.env("HQF_ACTION") === "share"
     property int connectivityStatus: 0
     property string lastSavedPath: ""
     property string lastTimestamp: ""
@@ -288,7 +289,7 @@ Scope {
             id: overlay
 
             required property var modelData
-            property bool isFocused: root.hyprlandMonitor ? modelData.name === root.hyprlandMonitor.name : true
+            property bool isFocused: modelData.name === root.activeScreenName
             property var themeRef: root.theme
             property var hyprMonitor: {
                 const monitors = Hyprland.monitors.values;
@@ -301,7 +302,6 @@ Scope {
             }
 
             targetScreen: modelData
-            grabKeyboard: isFocused
             visible: root.overlayVisible
             onVisibleChanged: {
                 if (visible && isFocused)
@@ -352,7 +352,19 @@ Scope {
 
             Shortcut {
                 sequence: "s"
-                onActivated: root.saveScreenshot(0, 0, overlay.width, overlay.height, overlay.modelData.name)
+                onActivated: {
+                    let targetMon = overlay.modelData;
+                    if (root.activeScreenName && root.activeScreenName !== targetMon.name) {
+                        const screens = Quickshell.screens;
+                        for (let i = 0; i < screens.length; i++) {
+                            if (screens[i].name === root.activeScreenName) {
+                                targetMon = screens[i];
+                                break;
+                            }
+                        }
+                    }
+                    root.saveScreenshot(0, 0, targetMon.width, targetMon.height, targetMon.name);
+                }
             }
 
             Shortcut {
@@ -508,6 +520,7 @@ Scope {
 
                 HoverHandler {
                     onPointChanged: {
+                        root.activeScreenName = overlay.modelData.name;
                         if (root.mode === "region" && !regionSelector.pressed) {
                             regionSelector.mouseX = point.position.x;
                             regionSelector.mouseY = point.position.y;
