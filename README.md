@@ -11,12 +11,9 @@ Features a modern overlay UI with shader-based dimming, bouncy animations, and i
 
 ## ✨ Features
 
-* **Three Modes**:
-  * **Region**: Drag to select an area. **Left-click** automatically captures the full screen, and **Right-click** resets your selection.
-  * **Window**: Hovering over a window highlights it—click to capture.
-  * **Temp**: A "clipboard-only" mode. Great for quick sharing when you don't want to clutter your disk.
-* **KDE Connect**: Push screenshots (and your clipboard) directly to your phone..
-* **Editor Support**: Choose between `satty` (default, fast utilitarian) or `gradia` (polished, modern Wayland support) to annotate right after capturing.
+* **Capture Modes:** Region (drag to select), Window (hover to select), and Temp (clipboard-only).
+* **KDE Connect** Push screenshots directly to your phone.
+* **Editor Support:** Integrates with `satty` or `gradia` for immediate post-capture annotation.
 
 ## 🎥 Demo
 
@@ -124,17 +121,16 @@ bind = SUPER SHIFT, C, exec, env HQF_ACTION=temp quickshell -c HyprQuickFrame -n
 
 ## 🛠️ Theme Configuration
 
-You can customize the look and feel by editing `theme.toml`. The application looks for the configuration file in the following order:
+Copy the default `theme.toml` to `~/.config/hyprquickframe/theme.toml` to customize. Changes apply instantly!
 
-1. `~/.config/hyprquickframe/theme.toml` (Recommended for user customization)
+The application checks for `theme.toml` in this order:
+1. `~/.config/hyprquickframe/theme.toml` (Recommended)
 2. `~/.config/quickshell/HyprQuickFrame/theme.toml`
-3. `[Install Directory]/theme.toml` (Default fallback)
-
-Copy the default `theme.toml` to `~/.config/hyprquickframe/theme.toml` and edit it to your liking. New colors are applied instantly!
+3. `[Install Directory]/theme.toml`
 
 ### Global Options
 
-You can toggle animations globally and configure the annotation tool:
+Configure animations and your preferred annotation tool inside `theme.toml`:
 
 ```toml
 # Enable or disable animations (default: true)
@@ -145,51 +141,22 @@ annotationTool = "satty"
 
 ## 🌌 Noctalia Support
 
- This project includes built-in support for [Noctalia](https://github.com/Ronin-CK/Noctalia), allowing HyprQuickFrame to automatically sync with your active wallpaper's color scheme.
-
-### Features
-
-* **Automatic Theme Sync**: Your accent, bar, and toggle colors update whenever you change your wallpaper in Noctalia.
-* **Smart Mapping**: Intelligently maps Noctalia's material design colors (`mPrimary`, `mSecondary`, etc.) to HyprQuickFrame's theme elements.
-* **Customizable**: You can disable specific sync components (like the bar background) by editing the sync script.
-
-### Enabling Dynamic Toggle Colors
-
- By default, `theme.toml` may have a hardcoded background color for the toggle buttons (e.g., `background = "white"` under `[toggle]`).
- To make the toggle buttons automatically sync with your `accent` color (whether set by Noctalia, `pywal`, `matugen`, or any other script):
-
-1. Open your active `theme.toml`.
-2. Find the `[toggle]` section.
-3. Delete or comment out the `background` key.
-
-```toml
- [toggle]
- # Remove or comment out this line:
- # background = "white"
-```
-
- Now, the toggles will dynamically follow whatever `accent` color is set by your external tools!
+HyprQuickFrame can automatically sync its colors with your wallpaper using [Noctalia](https://github.com/Ronin-CK/Noctalia).
 
 ### Setup
 
-1. Ensure you have `Noctalia` installed.
-2. The sync script is located at `scripts/sync_theme.py` in the repository. Make sure it is executable:
-
+1. Make the sync script executable:
    ```bash
-   chmod +x scripts/sync_theme.py
+   chmod +x /path/to/HyprQuickFrame/scripts/sync_theme.py
    ```
-3. Configure Noctalia's `wallpaperChange` hook to run the script in `~/.config/noctalia/settings.json`:
-
+2. Add it to your Noctalia `wallpaperChange` hook in `~/.config/noctalia/settings.json`:
    ```json
    "hooks": {
        "enabled": true,
-       "wallpaperChange": "python3 /home/vishal/config/quickshell/HyprQuickFrame/scripts/sync_theme.py"
+       "wallpaperChange": "python3 /path/to/HyprQuickFrame/scripts/sync_theme.py"
    }
    ```
-
-   > [!NOTE]
-   > Replace `/home/vishal/config/quickshell/HyprQuickFrame/` with the actual path to your repository if it differs.
-   >
+3. **Dynamic Toggle Colors (Optional):** To allow toggle buttons to sync dynamically, delete or comment out the `background` key under the `[toggle]` section in your `theme.toml`.
 
 
 ## ⚖️ License & Attribution
