@@ -60,7 +60,7 @@ yay -S quickshell-git
 
 ### 3. Install HyprQuickFrame
 
-**AUR (Recommended):**
+**AUR (Recommended):** Maintainer: [knownasnaffy](https://github.com/knownasnaffy)
 
 ```bash
 yay -S hyprquickframe-git
