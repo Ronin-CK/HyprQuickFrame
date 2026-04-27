@@ -34,8 +34,7 @@ PanelWindow {
     id: root
 
     property var targetScreen: Quickshell.screens[0]
-    property bool grabKeyboard: false
-    property bool isReady: false
+    property bool isReady: screencopy.hasContent
     property alias contentItem: root.contentItem
 
     screen: targetScreen
@@ -52,15 +51,10 @@ PanelWindow {
     }
 
     ScreencopyView {
+        id: screencopy
         captureSource: root.targetScreen
         anchors.fill: parent
         z: -1
     }
-    Timer {
-        interval: 100
-        running: true
-        onTriggered: {
-            root.isReady = true;
-        }
-    }
+
 }
