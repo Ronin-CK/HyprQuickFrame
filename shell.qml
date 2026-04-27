@@ -400,7 +400,7 @@ Scope {
             RegionSelector {
                 id: regionSelector
 
-                visible: root.mode === "region"
+                visible: root.mode === "region" && overlay.isReady
                 anchors.fill: parent
                 dimOpacity: overlay.themeRef.dimOpacity
                 borderRadius: overlay.themeRef.borderRadius
@@ -429,7 +429,7 @@ Scope {
             ControlBar {
                 id: segmentedControl
 
-                visible: overlay.isFocused
+                visible: overlay.isFocused && overlay.isReady
                 modes: root.modes
                 mode: root.mode
                 tempActive: root.tempActive
