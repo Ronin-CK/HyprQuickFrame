@@ -19,7 +19,6 @@ Scope {
 
     property var hyprlandMonitor: Hyprland.focusedMonitor
     property string activeScreenName: hyprlandMonitor ? hyprlandMonitor.name : (Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "")
-    property string tempPath: ""
     property string mode: ["region", "window"].indexOf(Quickshell.env("HQF_MODE")) !== -1 ? Quickshell.env("HQF_MODE") : "region"
     property var modes: ["edit", "region", "window", "temp"]
     property bool tempActive: Quickshell.env("HQF_ACTION") === "temp"
@@ -28,7 +27,6 @@ Scope {
     property int connectivityStatus: 0
     property string lastSavedPath: ""
     property string lastTimestamp: ""
-    property bool overlayVisible: false
     readonly property real targetMenuWidth: (modes.length - (editActive ? 1 : 0) - (tempActive ? 1 : 0)) * 100 + 8
     property var theme: themeObj
 
@@ -81,36 +79,15 @@ Scope {
         return "'" + s.replace(/'/g, "'\\''") + "'";
     }
 
-    function calculateCrop(x, y, width, height, screenName) {
-        let minX = Infinity;
-        let minY = Infinity;
-        let targetMonitor = null;
-        const monitors = Hyprland.monitors.values;
-        for (const m of monitors) {
-            minX = Math.min(minX, m.lastIpcObject.x);
-            minY = Math.min(minY, m.lastIpcObject.y);
-            if (m.name === screenName)
-                targetMonitor = m;
-
+    function grimGeometry(x, y, width, height, screenName) {
+        let target = null;
+        for (const m of Hyprland.monitors.values) {
+            if (m.name === screenName) { target = m; break; }
         }
-        if (!targetMonitor)
-            targetMonitor = hyprlandMonitor;
-
-        const scale = targetMonitor.scale;
-        const monitorX = targetMonitor.lastIpcObject.x;
-        const monitorY = targetMonitor.lastIpcObject.y;
-        const globalX = Math.round((x + monitorX) * scale);
-        const globalY = Math.round((y + monitorY) * scale);
-        return {
-            "cropX": globalX - Math.round(minX * scale),
-            "cropY": globalY - Math.round(minY * scale),
-            "scaledWidth": Math.round(width * scale),
-            "scaledHeight": Math.round(height * scale)
-        };
-    }
-
-    function cleanup() {
-        Quickshell.execDetached(["rm", "-f", tempPath]);
+        if (!target) target = hyprlandMonitor;
+        const mx = target.lastIpcObject.x;
+        const my = target.lastIpcObject.y;
+        return `${Math.round(x + mx)},${Math.round(y + my)} ${Math.round(width)}x${Math.round(height)}`;
     }
 
     function runPostSaveHook() {
@@ -130,32 +107,55 @@ Scope {
     }
 
     function saveScreenshot(x, y, width, height, screenName) {
-        const crop = calculateCrop(x, y, width, height, screenName);
+        const geom = grimGeometry(x, y, width, height, screenName);
         const picturesBase = Quickshell.env("XDG_PICTURES_DIR") || (Quickshell.env("HOME") + "/Pictures");
         const picturesDir = picturesBase + "/Screenshots";
-        const now = new Date();
-        const timestamp = Qt.formatDateTime(now, "yyyy-MM-dd_hh-mm-ss");
+        const timestamp = Qt.formatDateTime(new Date(), "yyyy-MM-dd_hh-mm-ss");
         const outputPath = `${picturesDir}/screenshot-${timestamp}.png`;
         root.lastTimestamp = timestamp;
         root.lastSavedPath = root.tempActive ? "" : outputPath;
-        const tempSnip = Quickshell.cachePath(`snip-${timestamp}.png`);
         const ePicturesDir = shellEscape(picturesDir);
         const eOutputPath = shellEscape(outputPath);
-        const eTempPath = shellEscape(tempPath);
-        const eTempSnip = shellEscape(tempSnip);
-        const shareCmd = "kdeconnect-cli -l | grep 'reachable' | grep -oP '[a-f0-9-]{8,}'" + " | head -1 | xargs -I{} sh -c" + " 'kdeconnect-cli -d {} --share \"$1\" && sleep 0.2" + " && kdeconnect-cli -d {} --send-clipboard' --";
-        const maybeShare = (escapedPath) => {
-            return root.shareActive ? ` && ${shareCmd} ${escapedPath}` : "";
-        };
+        const eGeom = shellEscape(geom);
+
+        const grimRegion = `timeout 5 grim -l 1 -g ${eGeom}`;
+
+        const shareCmd = "kdeconnect-cli -l | grep 'reachable' | grep -oP '[a-f0-9-]{8,}'"
+            + " | head -1 | xargs -I{} sh -c"
+            + " 'kdeconnect-cli -d {} --share \"$1\" && sleep 0.2"
+            + " && kdeconnect-cli -d {} --send-clipboard' --";
+        const maybeShare = (escapedPath) => root.shareActive ? ` && ${shareCmd} ${escapedPath}` : "";
         const shareTag = root.shareActive ? " & phone" : "";
         const mkdirCmd = `mkdir -p ${ePicturesDir}`;
-        const cropCmd = `magick ${eTempPath} -crop ` + `${crop.scaledWidth}x${crop.scaledHeight}` + `+${crop.cropX}+${crop.cropY} +repage`;
-        const sattyCommand = `${mkdirCmd} && ${cropCmd} png:- ` + `| satty --filename - ` + `--output-filename ${eOutputPath} --early-exit --init-tool brush ` + `&& wl-copy --type image/png < ${eOutputPath}` + `${maybeShare(eOutputPath)}; rm -f ${eTempPath}`;
-        const gradiaCommand = `${mkdirCmd} && ${cropCmd} ${eOutputPath} && hyprctl dispatch exec -- "gradia ${eOutputPath} || flatpak run be.alexandervanhee.gradia ${eOutputPath}"; sleep 0.5; rm -f ${eTempPath}`;
-        const defaultSaveCommand = `${mkdirCmd} && ${cropCmd} ${eOutputPath} ` + `&& wl-copy --type image/png < ${eOutputPath}` + `${maybeShare(eOutputPath)} ` + `&& notify-send -a "HyprQuickFrame" -i ${eOutputPath} ` + `-h string:image-path:${eOutputPath} "Screenshot Saved" ` + `"Saved to ${picturesDir}"; rm -f ${eTempPath}`;
-        const defaultTempCommand = `${cropCmd} ${eTempSnip} ` + `&& wl-copy --type image/png < ${eTempSnip}` + `${maybeShare(eTempSnip)} ` + `&& notify-send -a "HyprQuickFrame" "Screenshot Copied" ` + `"Copied to clipboard${shareTag}"; ` + `rm -f ${eTempPath} ${eTempSnip}`;
+
+        const sattyCommand =
+            `${mkdirCmd} && ${grimRegion} - `
+            + `| satty --filename - --output-filename ${eOutputPath} --early-exit --init-tool brush `
+            + `&& wl-copy --type image/png < ${eOutputPath}`
+            + `${maybeShare(eOutputPath)}`;
+        const gradiaCommand =
+            `${mkdirCmd} && ${grimRegion} ${eOutputPath} `
+            + `&& hyprctl dispatch exec -- "gradia ${eOutputPath} || flatpak run be.alexandervanhee.gradia ${eOutputPath}"`;
+        const defaultSaveCommand =
+            `${mkdirCmd} && ${grimRegion} ${eOutputPath} `
+            + `&& wl-copy --type image/png < ${eOutputPath}`
+            + `${maybeShare(eOutputPath)} `
+            + `&& notify-send -a "HyprQuickFrame" -i ${eOutputPath} `
+            + `-h string:image-path:${eOutputPath} "Screenshot Saved" `
+            + `"Saved to ${picturesDir}"`;
+        const eTempSnip = shellEscape(Quickshell.cachePath(`snip-${timestamp}.png`));
+        const tempShareCommand =
+            `${grimRegion} ${eTempSnip} `
+            + `&& wl-copy --type image/png < ${eTempSnip}`
+            + `${maybeShare(eTempSnip)} `
+            + `&& notify-send -a "HyprQuickFrame" "Screenshot Copied" "Copied to clipboard${shareTag}"; `
+            + `rm -f ${eTempSnip}`;
+        const tempPlainCommand =
+            `${grimRegion} - | wl-copy --type image/png `
+            + `&& notify-send -a "HyprQuickFrame" "Screenshot Copied" "Copied to clipboard"`;
+        const defaultTempCommand = root.shareActive ? tempShareCommand : tempPlainCommand;
+
         let cmd;
-        console.log("Evaluated annotationTool value:", theme.annotationTool);
         if (root.editActive)
             cmd = theme.annotationTool === "gradia" ? gradiaCommand : sattyCommand;
         else if (root.tempActive)
@@ -164,30 +164,23 @@ Scope {
             cmd = defaultSaveCommand;
         screenshotProcess.command = ["sh", "-c", cmd];
         screenshotProcess.running = true;
-        root.overlayVisible = false;
     }
 
     Component.onCompleted: {
-        const timestamp = Date.now();
-        const rand = Math.floor(Math.random() * 100000);
-        const path = Quickshell.cachePath(`screenshot-${timestamp}-${rand}.png`);
-        tempPath = path;
-        captureProcess.command = ["grim", "-l", "0", path];
-        captureProcess.running = true;
         connectivityProcess.running = true;
+        readyWatchdog.start();
     }
 
-    Process {
-        id: captureProcess
-
-        running: false
-        onExited: (code) => {
-            if (code === 0) {
-                showTimer.start();
-            } else {
-                cleanup();
-                Qt.quit();
+    Timer {
+        id: readyWatchdog
+        interval: 4000
+        repeat: false
+        onTriggered: {
+            for (const w of overlayVariants.instances) {
+                if (w && w.isReady) return;
             }
+            console.error("HyprQuickFrame: screencopy never produced a frame; exiting.");
+            Qt.quit();
         }
     }
 
@@ -234,15 +227,6 @@ Scope {
 
     }
 
-    Timer {
-        id: showTimer
-
-        interval: 50
-        running: false
-        repeat: false
-        onTriggered: root.overlayVisible = true
-    }
-
     Process {
         id: screenshotProcess
 
@@ -276,13 +260,14 @@ Scope {
     Process {
         id: connectivityProcess
 
-        command: ["sh", "-c", "kdeconnect-cli -l | grep 'reachable'"]
+        command: ["sh", "-c", "timeout 2 kdeconnect-cli -l | grep 'reachable'"]
         onExited: (code) => {
             root.connectivityStatus = (code === 0 ? 1 : 2);
         }
     }
 
     Variants {
+        id: overlayVariants
         model: Quickshell.screens
 
         FreezeScreen {
@@ -302,11 +287,10 @@ Scope {
             }
 
             targetScreen: modelData
-            visible: root.overlayVisible
-            onVisibleChanged: {
-                if (visible && isFocused)
+            visible: true
+            Component.onCompleted: {
+                if (isFocused)
                     cursorPosProcess.running = true;
-
             }
 
             Process {
@@ -334,10 +318,7 @@ Scope {
 
             Shortcut {
                 sequences: ["Escape", "q"]
-                onActivated: {
-                    root.cleanup();
-                    Qt.quit();
-                }
+                onActivated: Qt.quit()
             }
 
             Shortcut {
