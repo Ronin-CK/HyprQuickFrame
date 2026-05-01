@@ -27,6 +27,7 @@
  */
 
 import QtQuick
+import QtQuick.Shapes
 
 Item {
     id: root
@@ -86,56 +87,74 @@ Item {
         anchors.fill: parent
         z: 2
 
+        function requestPaint() {}
+
         readonly property color guideColor: Qt.rgba(1, 1, 1, 0.5)
 
-        Rectangle {
+        Shape {
+            anchors.fill: parent
             visible: !root.selecting
-            color: guides.guideColor
-            x: root.mouseX
-            y: 0
-            width: 1
-            height: parent.height
-        }
-        Rectangle {
-            visible: !root.selecting
-            color: guides.guideColor
-            x: 0
-            y: root.mouseY
-            width: parent.width
-            height: 1
+
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: root.mouseX; startY: 0
+                PathLine { x: root.mouseX; y: guides.height }
+            }
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: 0; startY: root.mouseY
+                PathLine { x: guides.width; y: root.mouseY }
+            }
         }
 
-        Rectangle {
+        Shape {
+            anchors.fill: parent
             visible: root.selecting
-            color: guides.guideColor
-            x: root.selectionX
-            y: 0
-            width: 1
-            height: parent.height
-        }
-        Rectangle {
-            visible: root.selecting
-            color: guides.guideColor
-            x: root.selectionX + root.selectionWidth
-            y: 0
-            width: 1
-            height: parent.height
-        }
-        Rectangle {
-            visible: root.selecting
-            color: guides.guideColor
-            x: 0
-            y: root.selectionY
-            width: parent.width
-            height: 1
-        }
-        Rectangle {
-            visible: root.selecting
-            color: guides.guideColor
-            x: 0
-            y: root.selectionY + root.selectionHeight
-            width: parent.width
-            height: 1
+
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: root.selectionX; startY: 0
+                PathLine { x: root.selectionX; y: guides.height }
+            }
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: root.selectionX + root.selectionWidth; startY: 0
+                PathLine { x: root.selectionX + root.selectionWidth; y: guides.height }
+            }
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: 0; startY: root.selectionY
+                PathLine { x: guides.width; y: root.selectionY }
+            }
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: guides.guideColor
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [4, 4]
+                fillColor: "transparent"
+                startX: 0; startY: root.selectionY + root.selectionHeight
+                PathLine { x: guides.width; y: root.selectionY + root.selectionHeight }
+            }
         }
     }
 
