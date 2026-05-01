@@ -69,13 +69,6 @@ Item {
         guides.requestPaint();
     }
 
-    onSelectionXChanged: guides.requestPaint()
-    onSelectionYChanged: guides.requestPaint()
-    onSelectionWidthChanged: guides.requestPaint()
-    onSelectionHeightChanged: guides.requestPaint()
-    onMouseXChanged: guides.requestPaint()
-    onMouseYChanged: guides.requestPaint()
-
     ShaderEffect {
         property vector4d selectionRect: Qt.vector4d(root.selectionX, root.selectionY, root.selectionWidth, root.selectionHeight)
         property real dimOpacity: root.dimOpacity
@@ -88,34 +81,61 @@ Item {
         fragmentShader: root.fragmentShader
     }
 
-    Canvas {
+    Item {
         id: guides
-
         anchors.fill: parent
         z: 2
-        onPaint: {
-            var ctx = getContext("2d");
-            ctx.clearRect(0, 0, width, height);
-            ctx.beginPath();
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            if (!root.selecting) {
-                ctx.moveTo(root.mouseX, 0);
-                ctx.lineTo(root.mouseX, root.height);
-                ctx.moveTo(0, root.mouseY);
-                ctx.lineTo(root.width, root.mouseY);
-            } else {
-                ctx.moveTo(root.selectionX, 0);
-                ctx.lineTo(root.selectionX, root.height);
-                ctx.moveTo(root.selectionX + root.selectionWidth, 0);
-                ctx.lineTo(root.selectionX + root.selectionWidth, root.height);
-                ctx.moveTo(0, root.selectionY);
-                ctx.lineTo(root.width, root.selectionY);
-                ctx.moveTo(0, root.selectionY + root.selectionHeight);
-                ctx.lineTo(root.width, root.selectionY + root.selectionHeight);
-            }
-            ctx.stroke();
+
+        readonly property color guideColor: Qt.rgba(1, 1, 1, 0.5)
+
+        Rectangle {
+            visible: !root.selecting
+            color: guides.guideColor
+            x: root.mouseX
+            y: 0
+            width: 1
+            height: parent.height
+        }
+        Rectangle {
+            visible: !root.selecting
+            color: guides.guideColor
+            x: 0
+            y: root.mouseY
+            width: parent.width
+            height: 1
+        }
+
+        Rectangle {
+            visible: root.selecting
+            color: guides.guideColor
+            x: root.selectionX
+            y: 0
+            width: 1
+            height: parent.height
+        }
+        Rectangle {
+            visible: root.selecting
+            color: guides.guideColor
+            x: root.selectionX + root.selectionWidth
+            y: 0
+            width: 1
+            height: parent.height
+        }
+        Rectangle {
+            visible: root.selecting
+            color: guides.guideColor
+            x: 0
+            y: root.selectionY
+            width: parent.width
+            height: 1
+        }
+        Rectangle {
+            visible: root.selecting
+            color: guides.guideColor
+            x: 0
+            y: root.selectionY + root.selectionHeight
+            width: parent.width
+            height: 1
         }
     }
 
@@ -210,7 +230,7 @@ Item {
     }
 
     Behavior on selectionX {
-        enabled: root.animateSelection && root.globalAnimations
+        enabled: root.animateSelection && root.globalAnimations && !root.selecting
 
         // Selection animations using spring dynamics
         SpringAnimation {
@@ -221,7 +241,7 @@ Item {
     }
 
     Behavior on selectionY {
-        enabled: root.animateSelection && root.globalAnimations
+        enabled: root.animateSelection && root.globalAnimations && !root.selecting
 
         SpringAnimation {
             spring: 4
@@ -231,7 +251,7 @@ Item {
     }
 
     Behavior on selectionWidth {
-        enabled: root.animateSelection && root.globalAnimations
+        enabled: root.animateSelection && root.globalAnimations && !root.selecting
 
         SpringAnimation {
             spring: 4
@@ -241,7 +261,7 @@ Item {
     }
 
     Behavior on selectionHeight {
-        enabled: root.animateSelection && root.globalAnimations
+        enabled: root.animateSelection && root.globalAnimations && !root.selecting
 
         SpringAnimation {
             spring: 4

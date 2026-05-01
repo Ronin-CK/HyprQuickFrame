@@ -36,107 +36,99 @@ Item {
     property var workspace: monitor?.activeWorkspace
     property var windows: workspace?.toplevels ?? []
 
-    signal checkHover(real mouseX, real mouseY)
-    signal regionSelected(real x, real y, real width, real height)  
+    signal regionSelected(real x, real y, real width, real height)
     property alias pressed: mouseArea.pressed
 
     property real mouseX: 0
     property real mouseY: 0
-    onMouseXChanged: checkHover(mouseX, mouseY)
-    onMouseYChanged: checkHover(mouseX, mouseY)
-      
-    property real dimOpacity: 0.6  
-    property real borderRadius: 10.0  
-    property real outlineThickness: 2.0  
-    property url fragmentShader: Qt.resolvedUrl("../shaders/dimming.frag.qsb")  
-      
-    property point startPos  
-    property real selectionX: 0  
-    property real selectionY: 0  
-    property real selectionWidth: 0  
-    property real selectionHeight: 0  
-      
+    onMouseXChanged: updateHovered()
+    onMouseYChanged: updateHovered()
+
+    property real dimOpacity: 0.6
+    property real borderRadius: 10.0
+    property real outlineThickness: 2.0
+    property url fragmentShader: Qt.resolvedUrl("../shaders/dimming.frag.qsb")
+
+    property real selectionX: 0
+    property real selectionY: 0
+    property real selectionWidth: 0
+    property real selectionHeight: 0
+
     property bool animateSelection: true
+
+    function hitWindow(mx, my) {
+        if (!monitor || !monitor.lastIpcObject)
+            return null;
+        const mx0 = monitor.lastIpcObject.x;
+        const my0 = monitor.lastIpcObject.y;
+        const list = windows;
+        for (let i = list.length - 1; i >= 0; i--) {
+            const w = list[i];
+            if (!w || !w.lastIpcObject) continue;
+            const wx = w.lastIpcObject.at[0] - mx0;
+            const wy = w.lastIpcObject.at[1] - my0;
+            const ww = w.lastIpcObject.size[0];
+            const wh = w.lastIpcObject.size[1];
+            if (mx >= wx && mx <= wx + ww && my >= wy && my <= wy + wh) {
+                return { x: wx, y: wy, w: ww, h: wh };
+            }
+        }
+        return null;
+    }
+
+    function updateHovered() {
+        const hit = hitWindow(mouseX, mouseY);
+        if (!hit) return;
+        selectionX = hit.x;
+        selectionY = hit.y;
+        selectionWidth = hit.w;
+        selectionHeight = hit.h;
+    }
 
     Behavior on selectionX { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
     Behavior on selectionY { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
     Behavior on selectionHeight { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
-    Behavior on selectionWidth { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }  
-      
+    Behavior on selectionWidth { enabled: root.animateSelection; SpringAnimation { spring: 4; damping: 0.4 } }
 
-    ShaderEffect {  
-        anchors.fill: parent  
-        z: 0  
-          
-        property vector4d selectionRect: Qt.vector4d(  
-            root.selectionX,  
-            root.selectionY,  
-            root.selectionWidth,  
-            root.selectionHeight  
-        )  
-        property real dimOpacity: root.dimOpacity  
-        property vector2d screenSize: Qt.vector2d(root.width, root.height)  
-        property real borderRadius: root.borderRadius  
-        property real outlineThickness: root.outlineThickness  
-          
-        fragmentShader: root.fragmentShader  
-    }  
 
-    Repeater {
-        model: root.windows
+    ShaderEffect {
+        anchors.fill: parent
+        z: 0
 
-        Item {
-            required property var modelData
+        property vector4d selectionRect: Qt.vector4d(
+            root.selectionX,
+            root.selectionY,
+            root.selectionWidth,
+            root.selectionHeight
+        )
+        property real dimOpacity: root.dimOpacity
+        property vector2d screenSize: Qt.vector2d(root.width, root.height)
+        property real borderRadius: root.borderRadius
+        property real outlineThickness: root.outlineThickness
 
-            Connections {
-                target: root
-
-                function onCheckHover(mouseX, mouseY) {
-                    // Retrieve window geometry from Hyprland IPC object
-                    if (!root.monitor || !root.monitor.lastIpcObject || !modelData.lastIpcObject)
-                        return;
-
-                    const monitorX = root.monitor.lastIpcObject.x
-                    const monitorY = root.monitor.lastIpcObject.y
-                    
-                    // Offset global coordinates by monitor position
-                    const windowX = modelData.lastIpcObject.at[0] - monitorX
-                    const windowY = modelData.lastIpcObject.at[1] - monitorY
-                    
-                    const width = modelData.lastIpcObject.size[0]
-                    const height = modelData.lastIpcObject.size[1]
-
-                    if (mouseX >= windowX && mouseX <= windowX + width && mouseY >= windowY && mouseY <= windowY + height) {
-                        selectionX = windowX
-                        selectionY = windowY
-                        selectionWidth = width
-                        selectionHeight = height
-                    }
-                }
-            }
-        }
+        fragmentShader: root.fragmentShader
     }
-      
-    MouseArea {  
-        id: mouseArea  
-        anchors.fill: parent  
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
         z: 3
         hoverEnabled: true
-          
-        onPositionChanged: (mouse) => { 
-            root.checkHover(mouse.x, mouse.y)
-        }  
-          
-        onReleased: (mouse) => {  
-            if (mouse.x >= root.selectionX && mouse.x <= root.selectionX + root.selectionWidth &&
-                mouse.y >= root.selectionY && mouse.y <= root.selectionY + root.selectionHeight) {
-                root.regionSelected(  
-                    Math.round(root.selectionX),  
-                    Math.round(root.selectionY),  
-                    Math.round(root.selectionWidth),  
-                    Math.round(root.selectionHeight)  
-                )  
-            }
-        }  
-    }  
+
+        onPositionChanged: (mouse) => {
+            root.mouseX = mouse.x;
+            root.mouseY = mouse.y;
+        }
+
+        onReleased: (mouse) => {
+            const hit = root.hitWindow(mouse.x, mouse.y);
+            if (!hit) return;
+            root.regionSelected(
+                Math.round(hit.x),
+                Math.round(hit.y),
+                Math.round(hit.w),
+                Math.round(hit.h)
+            );
+        }
+    }
 }
