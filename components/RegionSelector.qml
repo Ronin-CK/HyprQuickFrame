@@ -229,8 +229,17 @@ Item {
 
         visible: root.selecting && !root.canceled && root.selectionWidth > 20
         z: 4
-        x: root.selectionX + root.selectionWidth / 2 - width / 2
-        y: root.selectionY < 40 ? root.selectionY + 10 : root.selectionY - 35
+        x: Math.max(10, Math.min(root.width - width - 10, root.selectionX + root.selectionWidth / 2 - width / 2))
+        y: {
+            const labelHeight = height;
+            if (root.selectionY - labelHeight - 10 > 10)
+                return root.selectionY - labelHeight - 10;
+            
+            if (root.selectionY + root.selectionHeight + labelHeight + 10 < root.height - 10)
+                return root.selectionY + root.selectionHeight + 10;
+                
+            return root.selectionY + 10; // Fallback to inside top if no space above or below
+        }
         width: labelText.implicitWidth + 16
         height: labelText.implicitHeight + 8
         radius: 6
