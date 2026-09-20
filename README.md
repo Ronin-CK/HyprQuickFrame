@@ -118,7 +118,20 @@ environment.systemPackages = [ inputs.HyprQuickFrame.packages.${pkgs.system}.def
 
 ## ⚙️ Configuration (Hyprland)
 
-Add the following keybinding to your `hyprland.conf`:
+Add the following keybinding to your `hyprland.lua`:
+
+```ini
+-- Opens HyprQuickFrame - Decided on-the-fly whether to Edit, Save, or Copy
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("quickshell -c HyprQuickFrame -n"))
+
+-- Pre-selects the "window" mode (options: region, window)
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("env HQF_MODE=window quickshell -c HyprQuickFrame -n"))
+
+-- Pre-selects the "temp" action (options: temp, edit, share) natively
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("env HQF_ACTION=temp quickshell -c HyprQuickFrame -n"))
+```
+
+Or, if you are using the older `hyprland.conf` file:
 
 ```ini
 # Opens HyprQuickFrame - Decided on-the-fly whether to Edit, Save, or Copy
@@ -178,7 +191,13 @@ If you are using an Nvidia GPU with the Vulkan renderer (e.g. `WLR_RENDERER=vulk
 
 To fix this, you must launch HyprQuickFrame with the `QS_DISABLE_DMABUF=1` environment variable.
 
-You can modify your `hyprland.conf` bindings to include this variable:
+You can modify your `hyprland.lua` bindings to include this variable:
+```ini
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("env QS_DISABLE_DMABUF=1 quickshell -c HyprQuickFrame -n"))
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("env QS_DISABLE_DMABUF=1 HQF_MODE=window quickshell -c HyprQuickFrame -n"))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("env QS_DISABLE_DMABUF=1 HQF_ACTION=temp quickshell -c HyprQuickFrame -n"))
+```
+Or, if you are using the older `hyprland.conf` file, include the following variables:
 ```ini
 bind = SUPER SHIFT, S, exec, env QS_DISABLE_DMABUF=1 quickshell -c HyprQuickFrame -n
 bind = SUPER SHIFT, W, exec, env QS_DISABLE_DMABUF=1 HQF_MODE=window quickshell -c HyprQuickFrame -n
