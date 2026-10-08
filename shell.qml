@@ -296,6 +296,7 @@ Scope {
 
         FreezeScreen {
             id: overlay
+            WlrLayershell.namespace: "hyprquickframe"
 
             required property var modelData
             property bool isFocused: modelData.name === root.activeScreenName
